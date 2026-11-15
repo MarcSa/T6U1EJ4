@@ -79,6 +79,41 @@ function priorityBadge(p: TaskPriority) {
   return 'bg-secondary';
 }
 
+// exercici T6U1EJ3
+type Sort = 'sort' | 'reverse-sort' | 'none';
+const sortByDate = ref<Sort>('none');
+const sortByPriority = ref<Sort>('none');
+
+const priorityValueRelation: Record<TaskPriority, number> = {
+  low: 1,
+  medium: 2,
+  high: 3,
+};
+const changeDateSort = () => {
+  sortByPriority.value = 'none';
+  sortByDate.value = sortByDate.value === 'sort' ? 'reverse-sort' : 'sort';
+};
+const changePrioritySort = () => {
+  sortByDate.value = 'none';
+  sortByPriority.value = sortByPriority.value === 'sort' ? 'reverse-sort' : 'sort';
+};
+
+const cleanSort = () => {
+  sortByPriority.value = 'none';
+  sortByDate.value = 'none';
+};
+
+// /exercici T6U1EJ3
+
+// exercici T6U1EJ4
+const cardView = ref<boolean>(false);
+
+const changeView = () => {
+  cardView.value = !cardView.value;
+};
+
+// /exercici T6U1EJ4
+
 // exercici T6U1EJ2
 const search = ref<string>('');
 
@@ -110,33 +145,6 @@ const filteredTasks = computed(() => {
 });
 // /exercici T6U1EJ2
 
-// exercici T6U1EJ3
-type Sort = 'sort' | 'reverse-sort' | 'none';
-const sortByDate = ref<Sort>('none');
-const sortByPriority = ref<Sort>('none');
-
-const priorityValueRelation: Record<TaskPriority, number> = {
-  low: 1,
-  medium: 2,
-  high: 3,
-};
-const changeDateSort = () => {
-  sortByPriority.value = 'none';
-  sortByDate.value = sortByDate.value === 'sort' ? 'reverse-sort' : 'sort';
-};
-const changePrimarySort = () => {
-  sortByDate.value = 'none';
-  sortByPriority.value = sortByPriority.value === 'sort' ? 'reverse-sort' : 'sort';
-};
-
-const cleanSort = () => {
-  sortByPriority.value = 'none';
-  sortByDate.value = 'none';
-  console.log('sortByPriority: ' + sortByPriority.value, 'sortByDate: ' + sortByDate.value);
-};
-
-// /exercici T6U1EJ3
-
 onMounted(loadTasks);
 </script>
 
@@ -163,20 +171,27 @@ onMounted(loadTasks);
     >
       No hay tareas que coincidan con la búsqueda.
     </p>
-    <!-- sort by -->
-    <div class="btn-container" v-if="!loading && filteredTasks.length">
-      <button type="button" class="btn btn-outline-primary me-2" @click="changeDateSort">
-        Ordenar por fecha <span v-if="sortByDate === 'sort'">&uarr;</span>
-        <span v-if="sortByDate === 'reverse-sort'">&darr;</span>
-      </button>
-      <button type="button" class="btn btn-outline-primary me-2" @click="changePrimarySort">
-        Ordenar por prioridad <span v-if="sortByPriority === 'sort'">&uarr;</span>
-        <span v-if="sortByPriority === 'reverse-sort'">&darr;</span>
-      </button>
-      <button type="button" class="btn btn-outline-secondary" @click="cleanSort">
-        Limpiar orden
+    <div class="d-flex justify-content-between">
+      <div class="btn-container" v-if="!loading && filteredTasks.length">
+        <button type="button" class="btn btn-outline-primary me-2" @click="changeDateSort">
+          Ordenar por fecha <span v-if="sortByDate === 'sort'">&uarr;</span>
+          <span v-if="sortByDate === 'reverse-sort'">&darr;</span>
+        </button>
+        <button type="button" class="btn btn-outline-primary me-2" @click="changePrioritySort">
+          Ordenar por prioridad <span v-if="sortByPriority === 'sort'">&uarr;</span>
+          <span v-if="sortByPriority === 'reverse-sort'">&darr;</span>
+        </button>
+        <button type="button" class="btn btn-outline-secondary" @click="cleanSort">
+          Limpiar orden
+        </button>
+      </div>
+      <!-- T6U1EJ4 -->
+      <button type="button" class="btn btn-outline-info info-button ms-auto" @click="changeView">
+        Vista {{ !cardView ? 'tarjetas' : 'listas' }}
       </button>
     </div>
+    <!-- sort by -->
+    <!-- /T6U1EJ4 -->
     <!-- /sort by -->
     <hr v-if="!loading && filteredTasks.length" class="mb-5" />
     <!-- /Buscar -->
@@ -214,40 +229,62 @@ onMounted(loadTasks);
       {{ error }}
     </div>
 
-    <div v-if="!loading && filteredTasks.length" class="list-group">
+    <div v-if="!loading && filteredTasks.length" :class="cardView ? 'row' : 'list-group'">
       <RouterLink
         v-for="task in filteredTasks"
         :key="task.id"
         :to="{ name: 'task-detail', params: { id: task.id } }"
-        class="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
+        :class="
+          cardView ? 'col-12 col-lg-4 cardDisplay' : 'list-group-item list-group-item-action '
+        "
       >
-        <div class="me-3">
-          <span class="badge me-2" :class="task.completed ? 'bg-success' : 'bg-warning text-dark'">
-            {{ task.completed ? 'Hecha' : 'Pendiente' }}
-          </span>
+        <div :class="cardView ? 'card h-100 px-3 py-3' : 'd-flex justify-content-between'">
+          <div :class="cardView ? '' : 'me-3'">
+            <div v-if="!cardView">
+              <span
+                class="badge me-2"
+                :class="task.completed ? 'bg-success' : 'bg-warning text-dark'"
+              >
+                {{ task.completed ? 'Hecha' : 'Pendiente' }}
+              </span>
 
-          <span class="fw-semibold">{{ task.name }}</span>
+              <span class="fw-semibold">{{ task.name }}</span>
 
-          <span class="badge ms-2" :class="priorityBadge(task.priority)">
-            {{ task.priority }}
-          </span>
+              <span class="badge ms-2" :class="priorityBadge(task.priority)">
+                {{ task.priority }}
+              </span>
+            </div>
+            <div v-else class="header-card">
+              <h4 class="fw-semibold">{{ task.name }}</h4>
+              <span
+                class="badge ms-auto"
+                :class="task.completed ? 'bg-success' : 'bg-warning text-dark'"
+              >
+                {{ task.completed ? 'Hecha' : 'Pendiente' }}
+              </span>
+            </div>
 
-          <div class="text-muted small mt-1">
-            {{ task.description }}
+            <div class="text-muted small mt-1" :class="cardView ? 'card-description' : ''">
+              {{ task.description }}
+            </div>
           </div>
-        </div>
 
-        <div class="d-flex align-items-center gap-2">
-          <small class="text-muted">{{ new Date(task.dueDate).toLocaleDateString() }}</small>
+          <div class="d-flex align-items-center gap-2" :class="cardView ? 'card-bottom' : ''">
+            <span class="badge ms-2" :class="priorityBadge(task.priority)" v-if="cardView">
+              {{ task.priority }}
+            </span>
+            <small class="text-muted">{{ new Date(task.dueDate).toLocaleDateString() }}</small>
 
-          <button
-            v-if="!task.completed"
-            class="btn btn-sm btn-outline-success"
-            @click.prevent="onCompleteTask(task.id)"
-            title="Completar"
-          >
-            ✓
-          </button>
+            <button
+              v-if="!task.completed"
+              class="btn btn-sm btn-outline-success"
+              :class="cardView ? 'ms-auto' : ''"
+              @click.prevent="onCompleteTask(task.id)"
+              title="Completar"
+            >
+              ✓
+            </button>
+          </div>
         </div>
       </RouterLink>
     </div>
@@ -257,3 +294,28 @@ onMounted(loadTasks);
     </p>
   </section>
 </template>
+<style scoped>
+.info-button:hover {
+  background-color: #0dcaf0;
+  color: #ffffff;
+}
+.card-bottom .badge {
+  margin-left: 0 !important;
+}
+.header-card {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.cardDisplay {
+  text-decoration: none;
+}
+.cardDisplay h4 {
+  margin-bottom: 0;
+}
+.card-description {
+  margin-bottom: 1rem;
+  margin-top: 0;
+}
+</style>
